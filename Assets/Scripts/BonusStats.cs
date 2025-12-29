@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 [System.Serializable]
-public class BonusStats : MonoBehaviour
+public class BonusStats
 {
     public float bonusDamage;
     public float bonusCooldown;

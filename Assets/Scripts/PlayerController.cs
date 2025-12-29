@@ -21,6 +21,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] SpriteRenderer sprite;
     [SerializeField] Animator animator;
 
+    [Header("Weapon Slots")]
+    [SerializeField] private WeaponSlot[] weaponSlots = new WeaponSlot[4];
+
     [Header("Spells")]
     [SerializeField] AllSpellsSO allSpells;
 
@@ -52,10 +55,15 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        AirSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.AIRSPELL], this);
-        FireSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.FIRESPELL], this);
-        WaterSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.WATERSPELL], this);
-        EarthSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.EARTHSPELL], this);
+        //AirSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.AIRSPELL], this);
+        //FireSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.FIRESPELL], this);
+        //WaterSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.WATERSPELL], this);
+        //EarthSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.EARTHSPELL], this);
+
+        for (int i = 0; i < weaponSlots.Length; i++)
+            weaponSlots[i] = new WeaponSlot();
+        ElementType startElement = GetRandomElement();
+        AddElementToSlot(startElement, 0);
     }
 
     void FixedUpdate()
