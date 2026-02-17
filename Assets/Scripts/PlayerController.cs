@@ -145,4 +145,9 @@ public class PlayerController : MonoBehaviour
         //Doldur
     }
 
+    private ElementType GetRandomElement()
+    {
+        int randomIndex = Random.Range(0, System.Enum.GetValues(typeof(ElementType)).Length);
+        return (ElementType)randomIndex;
+    }
 }
