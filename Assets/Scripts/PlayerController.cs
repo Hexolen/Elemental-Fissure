@@ -63,7 +63,7 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < weaponSlots.Length; i++)
             weaponSlots[i] = new WeaponSlot();
         ElementType startElement = GetRandomElement();
-        AddElementToSlot(startElement, 0);
+        //AddElementToSlot(startElement, 0);
     }
 
     void FixedUpdate()
