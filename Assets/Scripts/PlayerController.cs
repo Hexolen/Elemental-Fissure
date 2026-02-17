@@ -63,7 +63,7 @@ public class PlayerController : MonoBehaviour
         for (int i = 0; i < weaponSlots.Length; i++)
             weaponSlots[i] = new WeaponSlot();
         ElementType startElement = GetRandomElement();
-        AddElementToSlot(startElement, 0);
+        //AddElementToSlot(startElement, 0);
     }
 
     void FixedUpdate()
@@ -143,6 +143,12 @@ public class PlayerController : MonoBehaviour
     private void OnLevelUp()
     {
         //Doldur
+    }
+
+    private ElementType GetRandomElement()
+    {
+        int randomIndex = Random.Range(0, System.Enum.GetValues(typeof(ElementType)).Length);
+        return (ElementType)randomIndex;
     }
 
 }
