@@ -1,10 +1,10 @@
-using System;
-using UnityEngine;
+﻿using UnityEngine;
 
+/// <summary>
+/// Büyü prefabının temel statları. Slot bonusları SpellStatValues içinde bunun üstüne eklenir.
+/// </summary>
 public class SpellStats : MonoBehaviour
 {
-    public event Action OnStatsChanged;
-
     [Header("Base Stats")]
     [SerializeField] private float baseDamage;
     [SerializeField] private float baseCooldown;
@@ -23,11 +23,4 @@ public class SpellStats : MonoBehaviour
     public int BaseProjectileAmount => baseProjectileAmount;
     public int BaseKnockback => baseKnockback;
     public int BaseBounces => baseBounces;
-
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        OnStatsChanged?.Invoke();
-    }
-#endif
 }

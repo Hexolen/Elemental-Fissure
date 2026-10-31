@@ -2,167 +2,70 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class EarthSpell : MonoBehaviour
+/// <summary>
+/// Toprak: en yakın düşmanların altında açılan, içindekilere sürekli hasar veren alan.
+/// </summary>
+public class EarthSpell : Spell
 {
-    [Header("Spell Stats")]
-    [SerializeField] private SpellStats spellStats;
+    [Header("Earth")]
     [SerializeField] private float damageTickInterval = 0.5f;
-
-    [Header("Enemy Detection")]
-    [SerializeField] private LayerMask enemyLayer;
     [SerializeField] private float targetingRadius = 8f;
 
-    private readonly HashSet<Health> enemiesInside = new();
+    private readonly HashSet<Health> enemiesInside = new HashSet<Health>();
 
-    private static Coroutine spawnCoroutine;
-
-    private void OnEnable()
+    public override IEnumerator CastLoop(SlotWeapon weapon)
     {
-        spellStats.OnStatsChanged += OnStatsChanged;
-    }
-
-    private void OnDisable()
-    {
-        spellStats.OnStatsChanged -= OnStatsChanged;
-    }
-
-    private void OnStatsChanged()
-    {
-        Debug.Log("🪨 EarthSpell → Stats Changed!");
-
-        PlayerController context = FindAnyObjectByType<PlayerController>();
-        if (context == null) return;
-
-        if (spawnCoroutine != null)
-            context.StopCoroutine(spawnCoroutine);
-
-        spawnCoroutine = context.StartCoroutine(
-            SpawnLoop(context.transform, spellStats.gameObject)
-        );
-    }
-
-
-    /// <summary>
-    /// PlayerController bunu çağırır
-    /// </summary>
-    public static void Spawn(Transform player, GameObject spellPrefab, MonoBehaviour context)
-    {
-        if (spawnCoroutine != null)
-            context.StopCoroutine(spawnCoroutine);
-
-        spawnCoroutine = context.StartCoroutine(
-            SpawnLoop(player, spellPrefab)
-        );
-    }
-
-
-    private static IEnumerator SpawnLoop(Transform player, GameObject spellPrefab)
-    {
-        SpellStats stats = spellPrefab.GetComponent<SpellStats>();
-        
-
-        // prefab içindeki EarthSpell scriptine erişiyoruz (targetingRadius, enemyLayer burada)
-        EarthSpell prefabScript = spellPrefab.GetComponent<EarthSpell>();
-
         while (true)
         {
-            float cooldown = stats != null ? stats.BaseCooldown : 1f;
-            int projectileAmount = stats != null ? stats.BaseProjectileAmount : 1;
+            SpellStatValues s = weapon.Stats;
 
-            // 1) Overlap ile hitleri al
-            List<Transform> uniqueTargets = new List<Transform>();
-            if (prefabScript != null)
+            // Hedef yoksa hiçbir şey spawnlanmaz
+            List<Transform> targets = FindEnemiesByDistance(weapon.Owner.position, targetingRadius);
+            int spawnCount = Mathf.Min(s.projectileAmount, targets.Count);
+
+            for (int i = 0; i < spawnCount; i++)
             {
-                Collider2D[] hits = Physics2D.OverlapCircleAll(player.position, prefabScript.targetingRadius, prefabScript.enemyLayer);
-
-                // 2) Her hit için "ana" transformu al (attachedRigidbody varsa onun transform'u, yoksa collider.transform)
-                foreach (var h in hits)
-                {
-                    Transform candidate = h.attachedRigidbody != null ? h.attachedRigidbody.transform : h.transform;
-
-                    // Tekilleştir (aynı transform zaten ekliyse atla)
-                    if (!uniqueTargets.Contains(candidate))
-                        uniqueTargets.Add(candidate);
-                }
-
-                // 3) Eğer hiç hedef yoksa hiçbir şey spawnlama (istediğin davranış bu)
-                if (uniqueTargets.Count > 0)
-                {
-                    // 4) Player konumuna göre sırala — en yakın ilk
-                    uniqueTargets.Sort((a, b) =>
-                    {
-                        float da = (a.position - player.position).sqrMagnitude;
-                        float db = (b.position - player.position).sqrMagnitude;
-                        return da.CompareTo(db);
-                    });
-
-                    // 5) Kaç tane spawnlayabileceğimizi hesapla
-                    int spawnCount = Mathf.Min(projectileAmount, uniqueTargets.Count);
-
-                    // 6) İlk spawnCount hedefin altına instantiate et
-                    for (int i = 0; i < spawnCount; i++)
-                    {
-                        Transform target = uniqueTargets[i];
-                        Vector3 spawnPos = target.position;
-
-                        GameObject instance = Instantiate(spellPrefab, spawnPos, Quaternion.identity);
-                        EarthSpell earthSpell = instance.GetComponent<EarthSpell>();
-                        if (earthSpell != null)
-                            earthSpell.Initialize(player);
-                    }
-                }
+                EarthSpell area = SpawnCopy<EarthSpell>(weapon, targets[i].position, Quaternion.identity);
+                if (area != null)
+                    area.Activate();
             }
-            yield return new WaitForSeconds(cooldown);
+
+            yield return new WaitForSeconds(s.cooldown);
         }
     }
 
-    public void Initialize(Transform player)
+    private void Activate()
     {
-        if (spellStats != null)
-        {
-            float area = spellStats.BaseArea;
-            // pick a scaling rule you like; here 4 area = scale 1
-            float scaleFactor = area / 4f;
-            transform.localScale = Vector3.one * scaleFactor;
-
-            // lifetime
-            float duration = spellStats.BaseDuration;
-            Destroy(gameObject, duration);
-        }
-        else
-        {
-            // default size/duration if no stats attached
-            transform.localScale = Vector3.one;
-            Destroy(gameObject, 1.5f);
-        }
+        // 4 area = scale 1
+        transform.localScale = Vector3.one * (stats.area / 4f);
+        Destroy(gameObject, stats.duration);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if (((1 << collision.gameObject.layer) & enemyLayer) == 0) return;
+        if (!IsEnemy(collision.gameObject)) return;
 
         Health enemyHealth = collision.GetComponent<Health>();
-        if (!enemyHealth) return;
+        if (enemyHealth == null) return;
 
         if (enemiesInside.Add(enemyHealth))
-        {
             StartCoroutine(DamageOverTime(enemyHealth));
-        }
     }
+
     private void OnTriggerExit2D(Collider2D collision)
     {
-        if (((1 << collision.gameObject.layer) & enemyLayer) == 0) return;
+        if (!IsEnemy(collision.gameObject)) return;
 
         Health enemyHealth = collision.GetComponent<Health>();
-        if (!enemyHealth) return;
-
-        enemiesInside.Remove(enemyHealth);
+        if (enemyHealth != null)
+            enemiesInside.Remove(enemyHealth);
     }
+
     private IEnumerator DamageOverTime(Health enemy)
     {
-        while (enemiesInside.Contains(enemy))
+        while (enemy != null && enemiesInside.Contains(enemy))
         {
-            enemy.TakeDamage(spellStats.BaseDamage);
+            enemy.TakeDamage(stats.damage);
             yield return new WaitForSeconds(damageTickInterval);
         }
     }

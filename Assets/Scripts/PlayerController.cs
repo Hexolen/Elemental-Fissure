@@ -1,16 +1,6 @@
-using System.Collections.Generic;
-using Unity.VisualScripting;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
-
-public enum SpellNames
-{
-    AIRSPELL = 0,
-    FIRESPELL = 1,
-    WATERSPELL = 2,
-    EARTHSPELL = 3
-}
 
 public class PlayerController : MonoBehaviour
 {
@@ -22,10 +12,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] Animator animator;
 
     [Header("Weapon Slots")]
-    [SerializeField] private WeaponSlot[] weaponSlots = new WeaponSlot[4];
-
-    [Header("Spells")]
-    [SerializeField] AllSpellsSO allSpells;
+    [Tooltip("Oyun başında rastgele bir element verilir ve bu menüyle slota yerleştirilir")]
+    [SerializeField] private SlotSelectionMenu slotMenu;
 
     [Header("Stats")]
     [SerializeField] float maxHealth = 100;
@@ -55,15 +43,9 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-        //AirSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.AIRSPELL], this);
-        //FireSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.FIRESPELL], this);
-        //WaterSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.WATERSPELL], this);
-        //EarthSpell.Spawn(this.transform, allSpells.Spells[(int)SpellNames.EARTHSPELL], this);
-
-        for (int i = 0; i < weaponSlots.Length; i++)
-            weaponSlots[i] = new WeaponSlot();
-        ElementType startElement = GetRandomElement();
-        //AddElementToSlot(startElement, 0);
+        // Başlangıç elementi: oyuncu hangi slota koyacağını seçer
+        if (slotMenu != null)
+            slotMenu.Offer(ElementUtility.GetRandom(), false);
     }
 
     void FixedUpdate()
@@ -132,7 +114,7 @@ public class PlayerController : MonoBehaviour
 
         currentExp -= requiredExp;
 
-        // Exponential XP hesab�
+        // Exponential XP hesabı
         requiredExp = Mathf.CeilToInt(requiredExp * expMultiplier);
 
         Debug.Log($"LEVEL UP! Yeni Level: {level} | Yeni Gerekli EXP: {requiredExp}");
@@ -144,10 +126,4 @@ public class PlayerController : MonoBehaviour
     {
         //Doldur
     }
-
-    private ElementType GetRandomElement()
-    {
-        int randomIndex = Random.Range(0, System.Enum.GetValues(typeof(ElementType)).Length);
-        return (ElementType)randomIndex;
-    }
-}
+}
