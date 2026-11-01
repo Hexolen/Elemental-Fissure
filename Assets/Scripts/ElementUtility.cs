@@ -6,7 +6,7 @@
 public static class ElementUtility
 {
     /// <summary>
-    /// None hariç oynanabilir tüm elementler.
+    /// Slota konabilen 4 ana element (None ve Neutral hariç).
     /// </summary>
     public static readonly ElementType[] AllElements =
     {
@@ -15,6 +15,17 @@ public static class ElementUtility
         ElementType.Water,
         ElementType.Earth
     };
+
+    /// <summary>
+    /// Element slota konabilir mi (Hava, Ateş, Su, Toprak).
+    /// </summary>
+    public static bool IsPlayable(ElementType element)
+    {
+        return element == ElementType.Air
+            || element == ElementType.Fire
+            || element == ElementType.Water
+            || element == ElementType.Earth;
+    }
 
     public static ElementType GetRandom()
     {
@@ -29,6 +40,7 @@ public static class ElementUtility
             case ElementType.Fire: return "Ateş";
             case ElementType.Water: return "Su";
             case ElementType.Earth: return "Toprak";
+            case ElementType.Neutral: return "Nötr";
             default: return "Yok";
         }
     }
@@ -41,6 +53,7 @@ public static class ElementUtility
             case ElementType.Fire: return new Color(1.00f, 0.45f, 0.20f);
             case ElementType.Water: return new Color(0.25f, 0.55f, 1.00f);
             case ElementType.Earth: return new Color(0.60f, 0.42f, 0.22f);
+            case ElementType.Neutral: return new Color(0.85f, 0.85f, 0.85f);
             default: return Color.white;
         }
     }

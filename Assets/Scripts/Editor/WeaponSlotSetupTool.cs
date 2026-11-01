@@ -183,6 +183,14 @@ public static class WeaponSlotSetupTool
         }
         SetReference(manager, "spellDatabase", database);
 
+        ElementExpTracker elementExp = player.GetComponent<ElementExpTracker>();
+        if (elementExp == null)
+        {
+            elementExp = Undo.AddComponent<ElementExpTracker>(player.gameObject);
+            log.Add("• Player'a ElementExpTracker eklendi");
+        }
+        SetReference(player, "elementExp", elementExp);
+
         SlotSelectionMenu menu = Object.FindAnyObjectByType<SlotSelectionMenu>(FindObjectsInactive.Include);
         if (menu == null)
         {
@@ -196,7 +204,7 @@ public static class WeaponSlotSetupTool
         if (tester == null)
         {
             tester = Undo.AddComponent<SlotDebugTester>(player.gameObject);
-            log.Add("• Player'a SlotDebugTester eklendi (1-5 tuşları, Shift = PURE)");
+            log.Add("• Player'a SlotDebugTester eklendi (1-5: element, Shift = PURE, F1-F5: EXP orbu)");
         }
         SetReference(tester, "slotMenu", menu);
 

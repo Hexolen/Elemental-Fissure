@@ -16,6 +16,13 @@ public class WeaponSlotManager : MonoBehaviour
     [Tooltip("Bir slota konabilecek en fazla element sayısı")]
     [SerializeField, Min(1)] private int maxElementsPerSlot = 6;
 
+    [Header("Başlangıç (ana menü gelene kadar)")]
+    [Tooltip("Oyun başında slota konan element. None = başlangıç elementi yok")]
+    [SerializeField] private ElementType startingElement = ElementType.Fire;
+    [Tooltip("Başlangıç elementinin konacağı slot (1-4)")]
+    [SerializeField, Range(1, SlotCount)] private int startingSlot = 1;
+    [SerializeField] private bool startingElementIsPure = false;
+
     [Header("Slots (test için Inspector'dan element eklenebilir)")]
     [SerializeField] private WeaponSlot[] slots = new WeaponSlot[SlotCount];
 
@@ -39,7 +46,12 @@ public class WeaponSlotManager : MonoBehaviour
 
     private void Start()
     {
-        // Inspector'dan önceden doldurulmuş slotlar varsa onların silahlarını kur
+        // Başlangıç elementi (slot Inspector'dan doldurulmuşsa üstüne eklenmez)
+        int startIndex = startingSlot - 1;
+        if (ElementUtility.IsPlayable(startingElement) && IsValidIndex(startIndex) && slots[startIndex].IsEmpty)
+            slots[startIndex].AddElement(new SlotElement(startingElement, startingElementIsPure));
+
+        // Dolu slotların silahlarını kur
         for (int i = 0; i < SlotCount; i++)
         {
             slots[i].RecalculateBonus(spellDatabase);
@@ -84,9 +96,9 @@ public class WeaponSlotManager : MonoBehaviour
 
     public bool AddElement(int index, ElementType element, bool isPure)
     {
-        if (element == ElementType.None)
+        if (!ElementUtility.IsPlayable(element))
         {
-            Debug.LogWarning("WeaponSlotManager: None elementi slota eklenemez.");
+            Debug.LogWarning($"WeaponSlotManager: {element} elementi slota eklenemez.");
             return false;
         }
 

@@ -1,7 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class EnemyDropManager : MonoBehaviour
 {
+    [Header("Element")]
+    [Tooltip("Bu düşmanın elementi. Düşürdüğü EXP orbu bu elementten olur.")]
+    [SerializeField] private ElementType element = ElementType.Neutral;
+
     [Header("EXP Prefabs")]
     [SerializeField] private GameObject smallExpPrefab;
     [SerializeField] private GameObject mediumExpPrefab;
@@ -14,6 +18,8 @@ public class EnemyDropManager : MonoBehaviour
 
     [Header("Drop Offset")]
     [SerializeField] private Vector3 dropOffset = new Vector3(0, 0.2f, 0);
+
+    public ElementType Element => element;
 
     public void DropExp()
     {
@@ -29,7 +35,10 @@ public class EnemyDropManager : MonoBehaviour
 
         if (prefabToDrop != null)
         {
-            Instantiate(prefabToDrop, transform.position + dropOffset, Quaternion.identity);
+            GameObject drop = Instantiate(prefabToDrop, transform.position + dropOffset, Quaternion.identity);
+
+            if (drop.TryGetComponent(out ExpOrb orb))
+                orb.SetElement(element);
         }
     }
 }

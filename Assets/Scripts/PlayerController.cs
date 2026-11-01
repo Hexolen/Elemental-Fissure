@@ -12,8 +12,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField] Animator animator;
 
     [Header("Weapon Slots")]
-    [Tooltip("Oyun başında rastgele bir element verilir ve bu menüyle slota yerleştirilir")]
+    [Tooltip("Seviye atlayınca gelen element bu menüyle slota yerleştirilir")]
     [SerializeField] private SlotSelectionMenu slotMenu;
+
+    [Header("Element EXP")]
+    [Tooltip("Seviye atlarken hangi elementin geleceğini belirleyen puan takibi")]
+    [SerializeField] private ElementExpTracker elementExp;
 
     [Header("Stats")]
     [SerializeField] float maxHealth = 100;
@@ -41,11 +45,13 @@ public class PlayerController : MonoBehaviour
 
     public UnityEvent<float> OnSiphonResidueChanged = new UnityEvent<float>();
 
-    private void Start()
+    private void Awake()
     {
-        // Başlangıç elementi: oyuncu hangi slota koyacağını seçer
-        if (slotMenu != null)
-            slotMenu.Offer(ElementUtility.GetRandom(), false);
+        if (elementExp == null)
+            elementExp = GetComponent<ElementExpTracker>();
+
+        if (elementExp == null)
+            Debug.LogError($"{name}: ElementExpTracker yok, seviye atlarken element gelmeyecek!", this);
     }
 
     void FixedUpdate()
@@ -89,23 +95,33 @@ public class PlayerController : MonoBehaviour
         Gizmos.DrawWireSphere(transform.position, siphonResidue);
     }
 
-    public void AddExp(int amount)
+    /// <summary>
+    /// EXP ve orbun element puanını ekler. Seviye atlanırsa element puan oranlarına göre gelir.
+    /// </summary>
+    public void AddExp(int amount, ElementType orbElement)
     {
-        if (amount > 0)
-        {
-            currentExp += amount;
-
-            Debug.Log($"EXP Gained: {amount} | Total EXP: {currentExp}/{requiredExp}");
-
-            while (currentExp >= requiredExp)
-            {
-                LevelUp();
-            }
-        }
-        else
+        if (amount <= 0)
         {
             Debug.Log("AddExp called with zero or negative value!");
+            return;
         }
+
+        currentExp += amount;
+        if (elementExp != null)
+            elementExp.AddOrb(orbElement);
+
+        Debug.Log($"EXP Gained: {amount} ({ElementUtility.GetDisplayName(orbElement)}) | Total EXP: {currentExp}/{requiredExp}");
+
+        bool leveledUp = false;
+        while (currentExp >= requiredExp)
+        {
+            LevelUp();
+            leveledUp = true;
+        }
+
+        // Aynı anda birden fazla seviye atlanırsa hepsi aynı puan dağılımını kullanır, sonra yeni seviye için sıfırlanır
+        if (leveledUp && elementExp != null)
+            elementExp.ResetPoints();
     }
 
     private void LevelUp()
@@ -124,6 +140,16 @@ public class PlayerController : MonoBehaviour
 
     private void OnLevelUp()
     {
-        //Doldur
+        if (elementExp == null) return;
+
+        string summary = elementExp.GetSummary();
+        ElementType element = elementExp.RollElement(out bool isPure);
+        string pureText = isPure ? " (PURE)" : "";
+        Debug.Log($"Seviye {level} elementi: {ElementUtility.GetDisplayName(element)}{pureText} | Bu seviyedeki puanlar: {summary}");
+
+        if (slotMenu != null)
+            slotMenu.Offer(element, isPure);
+        else
+            Debug.LogWarning($"{name}: SlotSelectionMenu atanmadı, gelen element slota konamadı.");
     }
 }

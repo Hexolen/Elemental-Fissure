@@ -44,7 +44,7 @@ public class SlotSelectionMenu : MonoBehaviour
     /// </summary>
     public void Offer(ElementType element, bool isPure)
     {
-        if (element == ElementType.None) return;
+        if (!ElementUtility.IsPlayable(element)) return;
 
         if (slotManager == null)
         {
